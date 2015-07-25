@@ -10,6 +10,8 @@ using System.Web.Mvc;
 using ContosoUniversity.DAL;
 using ContosoUniversity.Models;
 
+using PagedList;
+
 namespace ContosoUniversity.Controllers
 {
     public class StudentController : Controller
@@ -17,17 +19,34 @@ namespace ContosoUniversity.Controllers
         private SchoolContext db = new SchoolContext();
 
         // GET: Students
-        public ViewResult Index(String sortOrder, String searchString)
-        {
-            ViewBag.NameSortParm = String.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
+        public ViewResult Index(
+            String sortOrder, 
+            String currentFilter, 
+            String searchString, 
+            Nullable<Int32> page
+        ){
+            ViewBag.CurrentSort = sortOrder; 
+            ViewBag.NameSortParm = String.IsNullOrEmpty(sortOrder) ? "name_desc" : ""; 
             ViewBag.DateSortParm = sortOrder == "Date" ? "date_desc" : "Date";
+
+            if (searchString != null)
+            {
+                page = 1;
+            }
+            else
+            {
+                searchString = currentFilter;
+            }
+
+            ViewBag.CurrentFilter = searchString;
+
             var students = from s in db.Students
                            select s;
             if (!String.IsNullOrEmpty(searchString))
             {
-                students = students.Where(
-                    s =>s.LastName.ToUpper().Contains(searchString.ToUpper())
-                      ||s.FirstMidName.ToUpper().Contains(searchString.ToUpper()));
+                students = students.Where(s =>
+                    s.LastName.ToUpper().Contains(searchString.ToUpper())
+                    ||s.FirstMidName.ToUpper().Contains(searchString.ToUpper()));
             }
             switch (sortOrder)
             {
@@ -40,12 +59,14 @@ namespace ContosoUniversity.Controllers
                 case "date_desc":
                     students = students.OrderByDescending(s => s.EnrollmentDate);
                     break;
-                default:
+                default:  // Name ascending  
                     students = students.OrderBy(s => s.LastName);
                     break;
             }
 
-            return View(students.ToList());
+            int pageSize = 3;
+            int pageNumber = (page ?? 1);
+            return View(students.ToPagedList(pageNumber, pageSize)); 
         } 
 
         // GET: Students/Details/5
