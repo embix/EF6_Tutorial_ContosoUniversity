@@ -17,12 +17,18 @@ namespace ContosoUniversity.Controllers
         private SchoolContext db = new SchoolContext();
 
         // GET: Students
-        public ActionResult Index(String sortOrder)
+        public ViewResult Index(String sortOrder, String searchString)
         {
             ViewBag.NameSortParm = String.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
             ViewBag.DateSortParm = sortOrder == "Date" ? "date_desc" : "Date";
             var students = from s in db.Students
                            select s;
+            if (!String.IsNullOrEmpty(searchString))
+            {
+                students = students.Where(
+                    s =>s.LastName.ToUpper().Contains(searchString.ToUpper())
+                      ||s.FirstMidName.ToUpper().Contains(searchString.ToUpper()));
+            }
             switch (sortOrder)
             {
                 case "name_desc":
@@ -38,8 +44,9 @@ namespace ContosoUniversity.Controllers
                     students = students.OrderBy(s => s.LastName);
                     break;
             }
-            return View(students.ToList()); 
-        }
+
+            return View(students.ToList());
+        } 
 
         // GET: Students/Details/5
         public ActionResult Details(int? id)
