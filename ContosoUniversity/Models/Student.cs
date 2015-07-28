@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ContosoUniversity.Models
 {
@@ -12,6 +13,7 @@ namespace ContosoUniversity.Models
         public String LastName { get; set; }
 
         [StringLength(50, ErrorMessage = "First name cannot be longer than 50 characters.")]
+        [Column("FirstName")]
         public String FirstMidName { get; set; }
 
         [DataType(DataType.Date)]
