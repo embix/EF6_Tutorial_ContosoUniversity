@@ -151,6 +151,10 @@
     <Compile Include="Migrations\201507281201475_ColumnFirstName.Designer.cs">
       <DependentUpon>201507281201475_ColumnFirstName.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\201507281211200_RequiredFields.cs" />
+    <Compile Include="Migrations\201507281211200_RequiredFields.Designer.cs">
+      <DependentUpon>201507281211200_RequiredFields.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\Course.cs" />
     <Compile Include="Models\Enrollment.cs" />
@@ -221,6 +225,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201507281201475_ColumnFirstName.resx">
       <DependentUpon>201507281201475_ColumnFirstName.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201507281211200_RequiredFields.resx">
+      <DependentUpon>201507281211200_RequiredFields.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>
