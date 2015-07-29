@@ -17,9 +17,10 @@ namespace ContosoUniversity.Controllers
         private SchoolContext db = new SchoolContext();
 
         // GET: Instructor
-        public ActionResult Index(int? id, int? courseID)
+        public ActionResult Index(int? id, int? courseId)
         {
             var viewModel = new InstructorIndexData();
+
             viewModel.Instructors = db.Instructors
                 .Include(i => i.OfficeAssignment)
                 .Include(i => i.Courses.Select(c => c.Department))
@@ -33,15 +34,26 @@ namespace ContosoUniversity.Controllers
                     .Courses;
             }
 
-            if (courseID != null)
+            if (courseId != null)
             {
-                ViewBag.CourseID = courseID.Value;
-                viewModel.Enrollments = viewModel.Courses
-                    .Single(x => x.CourseId == courseID)
-                    .Enrollments;
+                ViewBag.CourseID = courseId.Value;
+                // Lazy loading 
+                //viewModel.Enrollments = viewModel.Courses.Where( 
+                //    x => x.CourseId == courseId).Single().Enrollments; 
+                // Explicit loading 
+                var selectedCourse = viewModel.Courses
+                    .Single(x => x.CourseId == courseId);
+                db.Entry(selectedCourse).Collection(x => x.Enrollments).Load();
+                foreach (Enrollment enrollment in selectedCourse.Enrollments)
+                {
+                    db.Entry(enrollment).Reference(x => x.Student).Load();
+                }
+
+                viewModel.Enrollments = selectedCourse.Enrollments;
             }
 
-            return View(viewModel); 
+            return View(viewModel);
+
         }
 
         // GET: Instructor/Details/5
