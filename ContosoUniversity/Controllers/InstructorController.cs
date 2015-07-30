@@ -75,8 +75,10 @@ namespace ContosoUniversity.Controllers
         // GET: Instructor/Create
         public ActionResult Create()
         {
-            ViewBag.Id = new SelectList(db.OfficeAssignments, "InstructorId", "Location");
-            return View();
+            var instructor = new Instructor(); 
+            instructor.Courses = new List<Course>();
+            PopulateAssignedCourseData(instructor);
+            return View(); 
         }
 
         // POST: Instructor/Create
@@ -84,18 +86,29 @@ namespace ContosoUniversity.Controllers
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create([Bind(Include = "Id,LastName,FirstMidName,HireDate")] Instructor instructor)
+        public ActionResult Create(
+            [Bind(Include = "LastName,FirstMidName,HireDate,OfficeAssignment")]
+            Instructor instructor, 
+            String[] selectedCourses)
         {
+            if (selectedCourses != null)
+            {
+                instructor.Courses = new List<Course>();
+                foreach (var course in selectedCourses)
+                {
+                    var courseToAdd = db.Courses.Find(Int32.Parse(course));
+                    instructor.Courses.Add(courseToAdd);
+                }
+            }
             if (ModelState.IsValid)
             {
                 db.Instructors.Add(instructor);
                 db.SaveChanges();
                 return RedirectToAction("Index");
             }
-
-            ViewBag.Id = new SelectList(db.OfficeAssignments, "InstructorId", "Location", instructor.Id);
+            PopulateAssignedCourseData(instructor);
             return View(instructor);
-        }
+        } 
 
         // GET: Instructor/Edit/5
         public ActionResult Edit(int? id)
@@ -225,10 +238,22 @@ namespace ContosoUniversity.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult DeleteConfirmed(int id)
         {
-            Instructor instructor = db.Instructors.Find(id);
+            Instructor instructor = db.Instructors
+                .Include(i => i.OfficeAssignment)
+                .Single(i => i.Id == id);
+
+            instructor.OfficeAssignment = null;
             db.Instructors.Remove(instructor);
+
+            var department = db.Departments
+                .SingleOrDefault(d => d.InstructorId == id);
+            if (department != null)
+            {
+                department.InstructorId = null;
+            }
+
             db.SaveChanges();
-            return RedirectToAction("Index");
+            return RedirectToAction("Index"); 
         }
 
         protected override void Dispose(bool disposing)
