@@ -154,17 +154,13 @@ namespace ContosoUniversity.Controllers
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
             Department department = db.Departments.Find(id);
-            if (department == null)
+            if (department == null && concurrencyError == null)
             {
                 return HttpNotFound();
             }
 
             if (concurrencyError.GetValueOrDefault())
             {
-                // TODO: fix bug in tutorial
-                // bit hard to trigger:
-                //      to get here we need an edit after we Delete/Get and before DeletePost
-                //      and then a concurrent Delete/Post before our second Delete/Post
                 if (department == null)
                 {
                     ViewBag.ConcurrencyErrorMessage = "The record you attempted to delete "
