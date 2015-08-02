@@ -88,7 +88,8 @@ namespace ContosoUniversity.Controllers
         public async Task<ActionResult> Edit(
             [Bind(Include = "DepartmentID, Name, Budget, StartDate, RowVersion, InstructorId")]  
             Department department
-        ){
+        )
+        {
             try
             {
                 if (ModelState.IsValid)
@@ -113,7 +114,7 @@ namespace ContosoUniversity.Controllers
 
                     if (databaseValues.Name != clientValues.Name)
                     {
-                        ModelState.AddModelError("Name", "Current value: "+ databaseValues.Name);
+                        ModelState.AddModelError("Name", "Current value: " + databaseValues.Name);
                     }
                     if (databaseValues.Budget != clientValues.Budget)
                     {
@@ -146,29 +147,65 @@ namespace ContosoUniversity.Controllers
         }
 
         // GET: Department/Delete/5
-        public async Task<ActionResult> Delete(int? id)
+        public ActionResult Delete(Nullable<Int32> id, Nullable<Boolean> concurrencyError)
         {
             if (id == null)
             {
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
-            Department department = await db.Departments.FindAsync(id);
+            Department department = db.Departments.Find(id);
             if (department == null)
             {
                 return HttpNotFound();
             }
+
+            if (concurrencyError.GetValueOrDefault())
+            {
+                // TODO: fix bug in tutorial
+                // bit hard to trigger:
+                //      to get here we need an edit after we Delete/Get and before DeletePost
+                //      and then a concurrent Delete/Post before our second Delete/Post
+                if (department == null)
+                {
+                    ViewBag.ConcurrencyErrorMessage = "The record you attempted to delete "
+                        + "was deleted by another user after you got the original values. "
+                        + "Click the Back to List hyperlink.";
+                }
+                else
+                {
+                    ViewBag.ConcurrencyErrorMessage = "The record you attempted to delete "
+                        + "was modified by another user after you got the original values. "
+                        + "The delete operation was canceled and the current values in the "
+                        + "database have been displayed. If you still want to delete this "
+                        + "record, click the Delete button again. Otherwise "
+                        + "click the Back to List hyperlink.";
+                }
+            }
+
             return View(department);
         }
 
         // POST: Department/Delete/5
-        [HttpPost, ActionName("Delete")]
+        [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> DeleteConfirmed(int id)
+        public ActionResult Delete(Department department)
         {
-            Department department = await db.Departments.FindAsync(id);
-            db.Departments.Remove(department);
-            await db.SaveChangesAsync();
-            return RedirectToAction("Index");
+            try
+            {
+                db.Entry(department).State = EntityState.Deleted;
+                db.SaveChanges();
+                return RedirectToAction("Index");
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return RedirectToAction("Delete", new { concurrencyError = true });
+            }
+            catch (DataException /* dex */)
+            {
+                //Log the error (uncomment dex variable name after DataException and add a line here to write a log. 
+                ModelState.AddModelError(String.Empty, "Unable to delete. Try again, and if the problem persists contact your system administrator.");
+                return View(department);
+            }
         }
 
         protected override void Dispose(bool disposing)
