@@ -21,6 +21,7 @@ namespace ContosoUniversity.Models
         [Display(Name = "Start Date")]
         public DateTime StartDate { get; set; }
 
+        [Display(Name = "Administrator")]
         public Nullable<Int32> InstructorId { get; set; }
 
         public virtual Instructor Administrator { get; set; }
