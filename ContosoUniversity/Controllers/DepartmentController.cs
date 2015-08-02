@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Entity;
+using System.Data.Entity.Infrastructure;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Net;
@@ -41,7 +42,7 @@ namespace ContosoUniversity.Controllers
         // GET: Department/Create
         public ActionResult Create()
         {
-            ViewBag.InstructorId = new SelectList(db.Instructors, "Id", "LastName");
+            ViewBag.InstructorId = new SelectList(db.Instructors, "Id", "FullName");
             return View();
         }
 
@@ -59,7 +60,7 @@ namespace ContosoUniversity.Controllers
                 return RedirectToAction("Index");
             }
 
-            ViewBag.InstructorId = new SelectList(db.Instructors, "Id", "LastName", department.InstructorId);
+            ViewBag.InstructorId = new SelectList(db.Instructors, "Id", "FullName", department.InstructorId);
             return View(department);
         }
 
@@ -75,7 +76,7 @@ namespace ContosoUniversity.Controllers
             {
                 return HttpNotFound();
             }
-            ViewBag.InstructorId = new SelectList(db.Instructors, "Id", "LastName", department.InstructorId);
+            ViewBag.InstructorId = new SelectList(db.Instructors, "Id", "FullName", department.InstructorId);
             return View(department);
         }
 
@@ -84,15 +85,63 @@ namespace ContosoUniversity.Controllers
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Edit([Bind(Include = "DepartmentId,Name,Budget,StartDate,InstructorId")] Department department)
-        {
-            if (ModelState.IsValid)
+        public async Task<ActionResult> Edit(
+            [Bind(Include = "DepartmentID, Name, Budget, StartDate, RowVersion, InstructorId")]  
+            Department department
+        ){
+            try
             {
-                db.Entry(department).State = EntityState.Modified;
-                await db.SaveChangesAsync();
-                return RedirectToAction("Index");
+                if (ModelState.IsValid)
+                {
+                    db.Entry(department).State = EntityState.Modified;
+                    await db.SaveChangesAsync();
+                    return RedirectToAction("Index");
+                }
             }
-            ViewBag.InstructorId = new SelectList(db.Instructors, "Id", "LastName", department.InstructorId);
+            catch (DbUpdateConcurrencyException ex)
+            {
+                var entry = ex.Entries.Single();
+                var clientValues = (Department)entry.Entity;
+                var databaseEntry = entry.GetDatabaseValues();
+                if (databaseEntry == null)
+                {
+                    ModelState.AddModelError(String.Empty, "Unable to save changes. The department was deleted by another user.");
+                }
+                else
+                {
+                    var databaseValues = (Department)databaseEntry.ToObject();
+
+                    if (databaseValues.Name != clientValues.Name)
+                    {
+                        ModelState.AddModelError("Name", "Current value: "+ databaseValues.Name);
+                    }
+                    if (databaseValues.Budget != clientValues.Budget)
+                    {
+                        ModelState.AddModelError("Budget", "Current value: " + String.Format("{0:c}", databaseValues.Budget));
+                    }
+                    if (databaseValues.StartDate != clientValues.StartDate)
+                    {
+                        ModelState.AddModelError("StartDate", "Current value: " + String.Format("{0:d}", databaseValues.StartDate));
+                    }
+                    if (databaseValues.InstructorId != clientValues.InstructorId)
+                    {
+                        ModelState.AddModelError("InstructorID", "Current value: " + db.Instructors.Find(databaseValues.InstructorId).FullName);
+                    }
+                    ModelState.AddModelError(String.Empty, "The record you attempted to edit "
+                        + "was modified by another user after you got the original value. The "
+                        + "edit operation was canceled and the current values in the database "
+                        + "have been displayed. If you still want to edit this record, click "
+                        + "the Save button again. Otherwise click the Back to List hyperlink.");
+                    department.RowVersion = databaseValues.RowVersion;
+                }
+            }
+            catch (RetryLimitExceededException /* dex */)
+            {
+                //Log the error (uncomment dex variable name and add a line here to write a log. 
+                ModelState.AddModelError(String.Empty, "Unable to save changes. Try again, and if the problem persists contact your system administrator.");
+            }
+
+            ViewBag.InstructorID = new SelectList(db.Instructors, "ID", "FullName", department.InstructorId);
             return View(department);
         }
 
