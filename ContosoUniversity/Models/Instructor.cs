@@ -7,32 +7,14 @@ using System.Web;
 
 namespace ContosoUniversity.Models
 {
-    public class Instructor
+    public class Instructor : Person
     {
-        public Int32 Id { get; set; }
-
-        [Required]
-        [Display(Name = "Last Name")]
-        [StringLength(50)]
-        public String LastName { get; set; }
-
-        [Required]
-        [Column("FirstName")]
-        [StringLength(50)]
-        public String FirstMidName { get; set; }
-
-        [DataType(DataType.Date)]
-        [DisplayFormat(DataFormatString = "{0:yyy-MM-dd}", ApplyFormatInEditMode = true)]
-        [Display(Name = "Hire Date")]
-        public DateTime HireDate { get; set; }
-
-        [Display(Name = "Full Name")]
-        public String FullName
-        {
-            get { return LastName + ", " + FirstMidName; }
-        }
-
-        public virtual ICollection<Course> Courses { get; set; }
-        public virtual OfficeAssignment OfficeAssignment { get; set; }
+        [DataType(DataType.Date)] 
+        [DisplayFormat(DataFormatString = "{0:yyyy-MM-dd}", ApplyFormatInEditMode = true)] 
+        [Display(Name = "Hire Date")] 
+        public DateTime HireDate { get; set; } 
+ 
+        public virtual ICollection<Course> Courses { get; set; } 
+        public virtual OfficeAssignment OfficeAssignment { get; set; } 
     }
 }
