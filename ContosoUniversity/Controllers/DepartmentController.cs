@@ -95,10 +95,14 @@ namespace ContosoUniversity.Controllers
         public async Task<ActionResult> Edit(
             [Bind(Include = "DepartmentID, Name, Budget, StartDate, RowVersion, InstructorId")]  
             Department department
-        )
-        {
+        ){
             try
             {
+                if (ModelState.IsValid)
+                {
+                    ValidateOneAdministratorAssignmentPerInstructor(department);
+                }
+
                 if (ModelState.IsValid)
                 {
                     db.Entry(department).State = EntityState.Modified;
@@ -210,6 +214,27 @@ namespace ContosoUniversity.Controllers
                 return View(department);
             }
         }
+
+        private void ValidateOneAdministratorAssignmentPerInstructor(Department department) 
+        { 
+            if (department.InstructorId != null) 
+            { 
+                Department duplicateDepartment = db.Departments 
+                    .Include("Administrator") 
+                    .Where(d => d.InstructorId == department.InstructorId)
+                    .AsNoTracking()
+                    .FirstOrDefault(); 
+                if (duplicateDepartment != null && duplicateDepartment.DepartmentId != department.DepartmentId) 
+                { 
+                    String errorMessage = String.Format( 
+                        "Instructor {0} {1} is already administrator of the {2} department.", 
+                        duplicateDepartment.Administrator.FirstMidName, 
+                        duplicateDepartment.Administrator.LastName, 
+                        duplicateDepartment.Name); 
+                    ModelState.AddModelError(String.Empty, errorMessage); 
+                } 
+            } 
+        } 
 
         protected override void Dispose(bool disposing)
         {
