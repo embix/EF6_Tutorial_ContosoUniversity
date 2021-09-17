@@ -188,3 +188,5 @@ GeneratedArtifacts/
 _Pvt_Extensions/
 ModelManifest.xml
 ContosoUniversity/Properties/PublishProfiles/EvalContosoUniversity.pubxml
+
+.vs/
